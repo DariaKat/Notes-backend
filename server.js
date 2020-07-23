@@ -8,15 +8,26 @@ const uri = dbUri.uri;
 const url = "mongodb://localhost:27017/";
 const dbNameCloud = "test";
 const dbNameLocal = "archive";
+//const http = require('http');
+const sockjs = require('sockjs');
+const cors = require('cors');
+//const server = http.createServer();
+
+//server.listen(9999, '0.0.0.0');
+
+app.use(cors());
 
 app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header("Access-Control-Allow-Origin", "http://127.0.0.1:3000");
   res.header(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
+    "Origin, Credentials,  X-Requested-With, Content-Type, Accept"
   );
   next();
 });
+
+app.use(bodyParser.json());
 
 app.use(
   bodyParser.urlencoded({
@@ -28,6 +39,24 @@ app.use(
   let clientCloud;
   let clientLocal;
   try {
+    const echo = sockjs.createServer({ prefix:'/echo', disable_cors: true });
+
+    echo.header={
+      origin: '*:*'
+    };
+    console.log('conn.header: ',echo.header);
+
+    echo.on('connection', function(conn) {
+      setInterval(function() {
+        // отправка времени
+        conn.write(new Date().toLocaleTimeString());
+        }, 1000)
+      conn.on('data', function(message) {
+        conn.write(message);
+      });
+      conn.on('close', function() {});
+    });
+
     clientCloud = await MongoClient.connect(uri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -48,24 +77,10 @@ app.use(
 
     app.listen(port, () => {
       console.log("server " + port);
+      //echo.attach(app);
+      console.log(echo);
     });
   } catch (err) {
     console.log(err.stack);
   }
 })();
-
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
-
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
-app.use(bodyParser.json());
