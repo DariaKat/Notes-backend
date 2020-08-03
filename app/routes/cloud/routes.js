@@ -7,8 +7,9 @@ module.exports = function (app, db) {
       title: req.body.title,
       importance: req.body.importance,
       date: req.body.date,
+      // createdAt: new Date(),
     };
-
+    //db.collection("notes").createIndex( { "createdAt": 1 }, { expireAfterSeconds: 120 } );
     db.collection("notes").insertOne(note, (err, result) => {
       console.log("NOTE", note);
       if (err) {

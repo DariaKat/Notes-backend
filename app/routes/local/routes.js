@@ -16,8 +16,9 @@ module.exports = function (app, db) {
     const note = {
       text: req.body.text,
       title: req.body.title,
-      rate: req.body.rate,
-      status: req.body.status,
+      importance: req.body.importance,
+      date: req.body.date,
+      createdAt: new Date(),
     };
     db.collection(collectionName).insertOne(note, (err, result) => {
       if (err) res.send({ error: "An error has occurred" + err });
